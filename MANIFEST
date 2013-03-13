@@ -1,0 +1,14 @@
+LICENSE
+MANIFEST
+META.json
+META.yml
+Makefile.PL
+README
+config/database/config.yml
+config/database/private/config.yml
+dist.ini
+lib/Nour/Base.pm
+lib/Nour/Config.pm
+lib/Nour/Database.pm
+lib/Nour/Printer.pm
+t/release-pod-syntax.t

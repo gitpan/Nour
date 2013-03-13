@@ -1,0 +1,7 @@
+---
+openx:
+    dsn: dbi:mysql:database=foobarbaz;host=127.0.0.1;port=6066
+google_dfp:
+    dsn: dbi:mysql:database=bleeblahbloo;host=127.0.0.1;port=6066
+test:
+    dsn: dbi:mysql:database=bleeblooblah;host=127.0.0.1;port=6066

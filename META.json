@@ -1,0 +1,57 @@
+{
+   "abstract" : "Bootstrap your scripts",
+   "author" : [
+      "Nour Sharabash <amirite@cpan.org>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 4.300028, CPAN::Meta::Converter version 2.120921",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Nour",
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.30"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Test::Pod" : "1.41"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Carp" : "0",
+            "DBI" : "0",
+            "DBIx::Simple" : "0",
+            "Data::Dumper" : "0",
+            "File::Find" : "0",
+            "FindBin" : "0",
+            "IO::File" : "0",
+            "Moose" : "0",
+            "Moose::Role" : "0",
+            "YAML" : "0",
+            "feature" : "0",
+            "namespace::autoclean" : "0"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/quran/nour/issues"
+      },
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/quran/nour.git",
+         "web" : "https://github.com/quran/nour"
+      }
+   },
+   "version" : "0.01"
+}
+

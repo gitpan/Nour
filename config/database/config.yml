@@ -1,0 +1,19 @@
+---
+openx:
+    dsn: dbi:mysql:database=blahblah;host=blah
+google_dfp:
+    dsn: dbi:mysql:database=blahblahblee;host=bloo
+test:
+    dsn: dbi:mysql:database=blahblahblooblah;host=foo
+    option:
+        AutoCommit: 0
+default: test
+fallback:
+    username: ami
+    password: rite
+    option:
+        AutoCommit: 1
+        RaiseError: 1
+        PrintError: 1
+        mysql_enable_utf8: 1
+        mysql_auto_reconnect: 1
