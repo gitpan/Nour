@@ -1,17 +1,51 @@
 ---
-abstract: 'Bootstrap your scripts'
+abstract: 'Stuff written by me, Nour Sharabash'
 author:
   - 'Nour Sharabash <amirite@cpan.org>'
-build_requires: {}
+build_requires:
+  Capture::Tiny: 0
+  ExtUtils::MakeMaker: 0
+  File::Spec::Functions: 0
+  File::Temp: 0
+  List::Util: 0
+  Test::More: 0.88
+  blib: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 4.300028, CPAN::Meta::Converter version 2.120921'
+generated_by: 'Dist::Zilla version 4.300035, CPAN::Meta::Converter version 2.120921'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
 name: Nour
+no_index:
+  directory:
+    - t
+    - xt
+    - examples
+    - corpus
+  package:
+    - DB
+provides:
+  Nour:
+    file: lib/Nour.pm
+    version: 0.02
+  Nour::Base:
+    file: lib/Nour/Base.pm
+    version: 0.02
+  Nour::Config:
+    file: lib/Nour/Config.pm
+    version: 0.02
+  Nour::Database:
+    file: lib/Nour/Database.pm
+    version: 0.02
+  Nour::Logger:
+    file: lib/Nour/Logger.pm
+    version: 0.02
+  Nour::Script:
+    file: lib/Nour/Script.pm
+    version: 0.02
 requires:
   Carp: 0
   DBI: 0
@@ -19,13 +53,20 @@ requires:
   Data::Dumper: 0
   File::Find: 0
   FindBin: 0
-  IO::File: 0
+  Mojo::Log: 0
   Moose: 0
   Moose::Role: 0
+  String::CamelCase: 0
   YAML: 0
-  feature: 0
   namespace::autoclean: 0
+  perl: 5.006
+  strict: 0
+  warnings: 0
 resources:
   bugtracker: https://github.com/quran/nour/issues
+  homepage: https://metacpan.org/release/Nour
   repository: git://github.com/quran/nour.git
-version: 0.01
+version: 0.02
+x_authority: cpan:AMIRITE
+x_contributors:
+  - 'Nour Sharabash <nour.sharabash@gmail.com>'

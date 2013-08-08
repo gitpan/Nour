@@ -1,11 +1,31 @@
 NAME
-    Nour::Base
+    Nour - This module does nothing at the moment.
 
 VERSION
-    version 0.01
+    version 0.02
+
+DESCRIPTION
+    Temporary placeholder for something useful, maybe...
+
+SUPPORT
+  Bugs / Feature Requests
+    Please report any bugs or feature requests through the issue tracker at
+    <https://github.com/quran/nour/issues>. You will be notified
+    automatically of any progress on your issue.
+
+  Source Code
+    This is open source software. The code repository is available for
+    public review and contribution under the terms of the license.
+
+    <https://github.com/quran/nour>
+
+      git clone git://github.com/quran/nour.git
 
 AUTHOR
     Nour Sharabash <amirite@cpan.org>
+
+CONTRIBUTOR
+    Nour Sharabash <nour.sharabash@gmail.com>
 
 COPYRIGHT AND LICENSE
     This software is copyright (c) 2013 by Nour Sharabash.

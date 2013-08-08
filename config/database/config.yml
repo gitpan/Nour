@@ -1,16 +1,13 @@
 ---
-openx:
-    dsn: dbi:mysql:database=blahblah;host=blah
-google_dfp:
-    dsn: dbi:mysql:database=blahblahblee;host=bloo
-test:
-    dsn: dbi:mysql:database=blahblahblooblah;host=foo
+development:
+    dsn: dbi:mysql:database=myapp_development;host=10.0.1.101
+production:
+    dsn: dbi:mysql:database=myapp_production;host=10.0.1.101
     option:
         AutoCommit: 0
-default: test
-fallback:
-    username: ami
-    password: rite
+default:
+    database: development
+    username: this_is_not_hidden
     option:
         AutoCommit: 1
         RaiseError: 1
