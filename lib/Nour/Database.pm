@@ -12,6 +12,7 @@ use Mojo::Log;
 
 with 'Nour::Base';
 
+
 has _opts => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has _conf => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has _base => ( is => 'rw', isa => 'Str' );
@@ -310,7 +311,7 @@ Nour::Database - Mostly just a wrapper for DBIX::Simple.
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 DESCRIPTION
 
@@ -349,6 +350,10 @@ Mostly just a wrapper for DBIX::Simple.
 =head2 insert_id
 
 Review this. Extra cruft might be useful or not.
+
+=head1 NAME
+
+Nour::Database
 
 =head1 AUTHOR
 

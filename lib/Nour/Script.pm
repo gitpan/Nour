@@ -8,6 +8,7 @@ use strict; use warnings;
 
 with 'Nour::Base';
 
+
 use Nour::Logger;
 use Nour::Config;
 use Nour::Database;
@@ -80,11 +81,11 @@ Nour::Script - script bootstrap
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
-=head1 DESCRIPTION
+=head1 NAME
 
-Script bootstrap.
+Nour::Script
 
 =head1 AUTHOR
 

@@ -10,6 +10,7 @@ use Carp;
 
 with 'Nour::Base';
 
+
 has _logger => (
     is => 'rw'
     , isa => 'Mojo::Log'
@@ -57,7 +58,11 @@ Nour::Logger - a mixin module for logging, mostly just wraps Mojo::Log
 
 =head1 VERSION
 
-version 0.02
+version 0.03
+
+=head1 NAME
+
+Nour::Logger
 
 =head1 AUTHOR
 

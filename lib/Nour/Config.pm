@@ -1,6 +1,5 @@
 # vim: ts=4 sw=4 expandtab smarttab smartindent autoindent cindent
 package Nour::Config;
-# ABSTRACT: useful yaml config
 
 use Moose;
 use namespace::autoclean;
@@ -8,6 +7,7 @@ use YAML qw/LoadFile DumpFile/;
 use File::Find;
 
 with 'Nour::Base';
+
 
 has _config => (
     is => 'rw'
@@ -21,7 +21,6 @@ has _path => (
     is => 'rw'
     , isa => 'HashRef'
 );
-
 
 around BUILDARGS => sub {
     my ( $next, $self, @args, $args ) = @_;
@@ -122,7 +121,6 @@ sub config {
     return $self->_config;
 }
 
-
 sub build {
     my ( $self, %args ) = @_;
     my ( %file, %conf );
@@ -198,29 +196,105 @@ __END__
 
 =head1 NAME
 
-Nour::Config - useful yaml config
+Nour::Config
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
-=head1 DESCRIPTION
+=head1 NAME
 
-Very useful YAML configuration handler.
+Nour::Config
+
+=head1 ABSTRACT
+
+Recursively consumes C<YAML> configuration from the C<config> directory into a hash ref for use in your application.
+
+=head1 USAGE EXAMPLE
+
+=over 2
+
+=item 1. Create a config directory, either C<config>, C<conf>, or C<cfg>.
+
+  you@your_computer:~/code/your_app $ mkdir config
+  you@your_computer:~/code/your_app $ mkdir config/application
+  you@your_computer:~/code/your_app $ mkdir config/database
+  you@your_computer:~/code/your_app $ mkdir config/database/private
+  you@your_computer:~/code/your_app $ mkdir -p config/a/deeply/nested/example
+
+=item 2. Create your configuration YAML files
+
+  you@your_computer:~/code/your_app $ echo '---' > config/config.yml
+  you@your_computer:~/code/your_app $ echo '---' > config/application/config.yml
+  you@your_computer:~/code/your_app $ echo '---' > config/database/config.yml
+  you@your_computer:~/code/your_app $ echo '---' > config/database/private/config.yml
+  you@your_computer:~/code/your_app $ echo '---' > config/a/deeply/nested/example/neato.yml
+
+=item 3. Edit your configuration YAML with whatever you want.
+
+=item 4. In your script or application, create a Nour::Config instance.
+
+  use Nour::Config;
+  use Data::Dumper;
+  use feature ':5.10';
+
+then
+
+  my $config = new Nour::Config; # automatically detects and reads from
+                                 # a config, conf, or cfg directory
+
+or
+
+  my $config = new Nour::Config ( -base => 'config/application' );
+
+or
+
+  my $config = new Nour::Config ( -conf => { hash_key => 'override' }, -base => 'config' );
+
+or
+
+  my $config = new Nour::Config ( this_becomes_a_hash_key => 'config/database' );
+
+finally
+
+    say 'cfg', Dumper $config->config;
+    say 'app', Dumper $config->config( 'application' );
+    say 'db',  Dumper $config->config->{database};
+
+=back
+
+But it's even better with Moose if you import the config handle, so you can use C<config> as a handle in your script
+or application:
+
+    use Moose;
+    use Nour::Config;
+    use Data::Dumper;
+
+    has _config => (
+        is => 'rw'
+        , isa => 'Nour::Config'
+        , handles => [ qw/config/ ]
+        , required => 1
+        , lazy => 1
+        , default => sub {
+            return new Nour::Config ( -base => 'config' );
+        }
+    );
+
+    sub BUILD {
+        my $self = shift;
+
+        print "\nhello world\n", Dumper( $self->config ), "\n";
+    }
 
 =head1 METHODS
 
 =head2 config
 
-Does stuff.
+Returns the configuration accessor, and doubles as a hash ref.
 
-=head2 build
-
-Does other stuff.
-
-=head2 OPTIONS
-
-Stuff stuff.
+  print "\n", Dumper( $self->config( 'application' ) ), "\n";
+  print "\n", Dumper( $self->config->{application} ), "\n";
 
 =head1 AUTHOR
 

@@ -7,6 +7,8 @@ use Moose::Role;
 use namespace::autoclean;
 use strict; use warnings;
 
+
+
 has base => (
     is => 'rw'
     , required => 1
@@ -90,7 +92,11 @@ Nour::Base - just a base role
 
 =head1 VERSION
 
-version 0.02
+version 0.03
+
+=head1 NAME
+
+Nour::Base
 
 =head1 AUTHOR
 

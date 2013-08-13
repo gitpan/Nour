@@ -15,11 +15,15 @@ Nour - This module does nothing at the moment.
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 DESCRIPTION
 
 Temporary placeholder for something useful, maybe...
+
+=head1 NAME
+
+Nour
 
 =for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
 
