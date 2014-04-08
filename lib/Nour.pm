@@ -7,7 +7,7 @@ __END__
 
 =pod
 
-=encoding utf-8
+=encoding UTF-8
 
 =head1 NAME
 
@@ -15,7 +15,7 @@ Nour - This module does nothing at the moment.
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 DESCRIPTION
 
@@ -32,7 +32,7 @@ Nour
 =head2 Bugs / Feature Requests
 
 Please report any bugs or feature requests through the issue tracker
-at L<https://github.com/quran/nour/issues>.
+at L<https://github.com/sharabash/nour/issues>.
 You will be notified automatically of any progress on your issue.
 
 =head2 Source Code
@@ -40,9 +40,9 @@ You will be notified automatically of any progress on your issue.
 This is open source software.  The code repository is available for
 public review and contribution under the terms of the license.
 
-L<https://github.com/quran/nour>
+L<https://github.com/sharabash/nour>
 
-  git clone git://github.com/quran/nour.git
+  git clone git://github.com/sharabash/nour.git
 
 =head1 AUTHOR
 
@@ -54,7 +54,7 @@ Nour Sharabash <nour.sharabash@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by Nour Sharabash.
+This software is copyright (c) 2014 by Nour Sharabash.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

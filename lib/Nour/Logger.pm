@@ -6,7 +6,8 @@ use Moose;
 use namespace::autoclean;
 use Mojo::Log;
 use Data::Dumper qw//;
-use Carp;
+use Carp; $Carp::Verbose = 1;
+use feature ':5.10';
 
 with 'Nour::Base';
 
@@ -16,15 +17,25 @@ has _logger => (
     , isa => 'Mojo::Log'
     , handles => [ qw/debug error fatal info log warn/ ]
     , default => sub {
-        return new Mojo::Log ( level => 'debug' );
+        my $log = new Mojo::Log ( level => 'debug' );
+        $log->unsubscribe( 'message' );
+        $log->on( message => sub {
+            my ( $log, $level, @line, $tstamp ) = @_;
+            $tstamp = time;
+            say "[$tstamp] [$level] ", join ' ', @line;
+        } );
+        return $log;
     }
 );
+
+sub mojo { return shift->_logger } # return the Mojo::Log object
 
 do {
     my $method = $_;
     around $method => sub {
         my ( $next, $self, @args ) = @_;
 
+        return $self if $method eq 'log' and not @args; # return the Nour::Logger object
         my $dumped = $self->_dumper( pop @args ) if ref $args[ -1 ];
         push @args, $dumped if $dumped;
 
@@ -39,7 +50,9 @@ after fatal => sub {
 
 sub _dumper {
     my $self = shift;
-    return Data::Dumper->new( [ @_ ] )->Indent( 1 )->Sortkeys( 1 )->Terse( 1 )->Dump;
+    my $dump = Data::Dumper->new( [ @_ ] )->Indent( 1 )->Sortkeys( 1 )->Terse( 1 )->Dump;
+    $dump =~ s/(?:[\r\n\s]+$)//g;
+    return $dump;
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -50,7 +63,7 @@ __END__
 
 =pod
 
-=encoding utf-8
+=encoding UTF-8
 
 =head1 NAME
 
@@ -58,7 +71,7 @@ Nour::Logger - a mixin module for logging, mostly just wraps Mojo::Log
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 NAME
 
@@ -70,7 +83,7 @@ Nour Sharabash <amirite@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by Nour Sharabash.
+This software is copyright (c) 2014 by Nour Sharabash.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

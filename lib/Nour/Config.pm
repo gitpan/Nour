@@ -69,7 +69,8 @@ around BUILD => sub {
     }
     return $self->$next( @args ) unless %path;
 
-    my $conf = {};
+    my $conf = $self->_config;
+
     if ( my $path = $path{ '-base' } ) {
         finddepth( sub {
             my $name = $File::Find::name;
@@ -180,7 +181,7 @@ sub build {
 
     $self->merge_hash( $conf{merged}, $conf{public} )  if exists $conf{public};
     $self->merge_hash( $conf{merged}, $conf{private} ) if exists $conf{private};
-
+    $self->merge_hash( $conf{merged}, $args{conf} );
     $self->merge_hash( $args{conf}, $conf{merged} );
 }
 
@@ -192,7 +193,7 @@ __END__
 
 =pod
 
-=encoding utf-8
+=encoding UTF-8
 
 =head1 NAME
 
@@ -200,7 +201,7 @@ Nour::Config
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 NAME
 
@@ -240,20 +241,27 @@ Recursively consumes C<YAML> configuration from the C<config> directory into a h
 
 then
 
-  my $config = new Nour::Config; # automatically detects and reads from
-                                 # a config, conf, or cfg directory
+  # automatically detects and reads from a config, conf, or cfg directory
+  my $config = new Nour::Config;
 
 or
 
-  my $config = new Nour::Config ( -base => 'config/application' );
+  my $config = new Nour::Config (
+    -base => 'config/application'
+  );
 
 or
 
-  my $config = new Nour::Config ( -conf => { hash_key => 'override' }, -base => 'config' );
+  my $config = new Nour::Config (
+      -conf => { hash_key => 'override' }
+    , -base => 'config'
+  );
 
 or
 
-  my $config = new Nour::Config ( this_becomes_a_hash_key => 'config/database' );
+  my $config = new Nour::Config (
+    this_becomes_a_hash_key => 'config/database'
+  );
 
 finally
 
@@ -302,7 +310,7 @@ Nour Sharabash <amirite@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by Nour Sharabash.
+This software is copyright (c) 2014 by Nour Sharabash.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

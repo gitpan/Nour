@@ -9,8 +9,31 @@ use DBIx::Simple;
 use Carp;
 use Nour::Config;
 use Mojo::Log;
+use Getopt::Long qw/:config pass_through/;
 
 with 'Nour::Base';
+
+has log => (
+    is => 'rw'
+    , isa => 'Mojo::Log'
+    , default => sub {
+        my $self = shift;
+        my $opts = $self->_opts;
+        my %opts;
+
+        return $opts->{log} if $opts->{log} and ref $opts->{log} eq 'Mojo::Log';
+        if ( $opts->{log} ) {
+            $opts{path} = $opts->{log} if $opts->{log} =~ /[^\d]+/;
+        }
+        elsif ( $ENV{DBIC_TRACE} and $ENV{DBIC_TRACE} =~ /^1=(.*)$/ ) {
+            $opts{path} = $1;
+            $opts->{log} = 1;
+        }
+
+        return new Mojo::Log ( level => 'debug', %opts ) if $opts->{log};
+        return new Mojo::Log ( level => 'fatal' );
+    }
+);
 
 
 has _opts => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
@@ -25,15 +48,37 @@ has _config => (
     , required => 1
     , default => sub {
         my $self = shift;
+
         my $base = $self->_base;
         my %conf = %{ $self->_conf };
         my %opts;
 
         $opts{ '-conf' } = \%conf if %conf;
         $opts{ '-base' } = $base if $base;
-        $opts{ '-base' } = 'config/database' unless %opts;
+        $opts{ '-base' } = 'config/database' unless $opts{ '-base' };
 
-         return new Nour::Config ( %opts );
+        return new Nour::Config ( %opts );
+    }
+);
+
+has option => (
+    is => 'rw'
+    , isa => 'HashRef'
+    , required => 1
+    , lazy => 1
+    , default => sub {
+        my ( $self, %opts ) = @_;
+
+        $self->merge_hash( \%opts, $self->_opts );
+
+        GetOptions( \%opts
+            , qw/
+                database=s
+            /
+            , $self->config->{option}{getopts} ? @{ $self->config->{option}{getopts} } : ()
+        );
+
+        return \%opts;
     }
 );
 
@@ -49,12 +94,19 @@ has default_db => (
     , default => sub {
         my $self = shift;
         my $conf = $self->config;
+        my $opts = $self->option;
+
+        return $opts->{database}
+            if $opts->{database}
+                and $conf->{ $opts->{database} }
+                and ref $conf->{ $opts->{database} } eq 'HASH';
 
         return $conf->{default}{database}
             if exists $conf->{default}{database}
                 and not ref $conf->{default}{database}
                 and exists $conf->{ $conf->{default}{database} }
                 and ref $conf->{ $conf->{default}{database} } eq 'HASH';
+
         return '';
     }
 );
@@ -65,27 +117,6 @@ has current_db => (
     , default => sub {
         my $self = shift;
         return ( $self->default_db or '' );
-    }
-);
-
-has log => (
-    is => 'rw'
-    , isa => 'Mojo::Log'
-    , default => sub {
-        my $self = shift;
-        my $opts = $self->_opts;
-        my %opts;
-
-        if ( $opts->{log} ) {
-            $opts{path} = $opts->{log} if $opts->{log} =~ /[^\d]+/;
-        }
-        elsif ( $ENV{DBIC_TRACE} and $ENV{DBIC_TRACE} =~ /^1=(.*)$/ ) {
-            $opts{path} = $1;
-            $opts->{log} = 1;
-        }
-
-        return new Mojo::Log ( level => 'debug', %opts ) if $opts->{log};
-        return new Mojo::Log ( level => 'fatal' );
     }
 );
 
@@ -121,16 +152,18 @@ around BUILD => sub {
         if exists $conf->{default} and ref $conf->{default} eq 'HASH';
     delete $default{database};
 
-    for my $alias ( grep { $_ ne 'default' and ref $conf->{ $_ } eq 'HASH' } keys %{ $conf } ) {
-        $conf->{ $alias }->{__override} = delete $conf->{ $alias };
+    for my $alias ( grep { my $a = $_; my $c = grep { my $b = $_; $a eq $b } qw/default option/; my $d = !$c; $d } grep { ref $conf->{ $_ } eq 'HASH' } keys %{ $conf } ) {
+        $conf->{ $alias }{__override} = delete $conf->{ $alias };
 
         $self->merge_hash( $conf->{ $alias }, \%default );
-        $self->merge_hash( $conf->{ $alias }, delete $conf->{ $alias }->{__override} );
+        $self->merge_hash( $conf->{ $alias }, delete $conf->{ $alias }{__override} );
 
         my %conf = %{ delete $conf->{ $alias } };
 
-        $conf->{ $alias }->{conf} = \%conf;
-        $conf->{ $alias }->{args} = [
+        ( $conf{database} = $conf{dsn} ) =~ s/^.*[:;](?:dbname|database)=([^;]+).*$/$1/;
+        $conf->{ $alias }{name} = $alias;
+        $conf->{ $alias }{conf} = \%conf;
+        $conf->{ $alias }{args} = [
               $conf{dsn}
             , $conf{username}
             , $conf{password}
@@ -175,7 +208,7 @@ sub switch_to {
 
         croak "problem connecting to database $db: ", $@ if $@ or not $dbh;
         $self->_stored_handle->{ $db } = new DBIx::Simple ( $dbh );
-    } unless $self->_stored_handle->{ $db };
+    } unless $self->_stored_handle->{ $db } and $self->_stored_handle->{ $db }->dbh->ping;
 
     $self->current_db( $db );
 
@@ -187,6 +220,12 @@ sub db {
     my ( $self, @args ) = @_;
     return $self->switch_to( @args ) if @args;
     return $self;
+}
+
+sub cfg {
+    my ( $self ) = @_;
+    my $db = $self->current_db;
+    return $self->config->{ $db };
 }
 
 
@@ -279,6 +318,7 @@ sub query {
                 $query =~ s/\?/null/;
             }
         }
+        $query =~ s/(?:^[\r\n]+)|(?:[\r\n\s]+$)//g;
         $self->log->debug( "[query]\n$query" );
     }
     return $self->_current_handle->query( @_ );
@@ -303,7 +343,7 @@ __END__
 
 =pod
 
-=encoding utf-8
+=encoding UTF-8
 
 =head1 NAME
 
@@ -311,7 +351,7 @@ Nour::Database - Mostly just a wrapper for DBIX::Simple.
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 DESCRIPTION
 
@@ -361,7 +401,7 @@ Nour Sharabash <amirite@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by Nour Sharabash.
+This software is copyright (c) 2014 by Nour Sharabash.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

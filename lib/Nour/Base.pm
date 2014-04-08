@@ -84,7 +84,7 @@ __END__
 
 =pod
 
-=encoding utf-8
+=encoding UTF-8
 
 =head1 NAME
 
@@ -92,7 +92,7 @@ Nour::Base - just a base role
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 NAME
 
@@ -104,7 +104,7 @@ Nour Sharabash <amirite@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by Nour Sharabash.
+This software is copyright (c) 2014 by Nour Sharabash.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
