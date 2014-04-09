@@ -6,7 +6,7 @@ use Moose::Role; with 'Nour::Base';
 use namespace::autoclean;
 use String::CamelCase qw/decamelize/;
 use Getopt::Long qw/:config pass_through/;
-
+use Pod::Usage;
 
 use Nour::Logger;
 use Nour::Config;
@@ -32,12 +32,23 @@ has _config => (
     , lazy => 1
     , default => sub {
         my $self = shift;
-        return new Nour::Config ( -base => $self->_config_path );
+        my $conf = new Nour::Config ( -base => $self->_config_path );
+        case_exception: {
+            if ( -e $self->_config_path_auto .'.yml' and not -d $self->_config_path_auto ) {
+                my $name = pop @{ [ split /\//, $self->_config_path_auto ] };
+                my %conf = %{ delete $conf->config->{ $name } };
+                delete $conf->config->{ $_ } for keys %{ scalar $conf->config };
+                $conf->config( \%conf );
+            }
+        };
+        return $conf;
     }
 );
 sub _config_path_auto {
     my $self = shift;
-    return $self->path( qw/config/, map { decamelize $_ } split /::/, ref $self );
+    my $path = $self->path( qw/config/, map { decamelize $_ } split /::/, ref $self );
+       $path =~ s/\/$//;
+    return $path;
 }
 has _config_path => (
     is => 'rw'
@@ -47,8 +58,12 @@ has _config_path => (
     , default => sub {
         my $self = shift;
         my $path =  $self->_config_path_auto;
-        my $base = -d $path ? $path : $self->path( 'config' );
-        return $base;
+        return $path if -d $path; # use ./config/whatever/package as the base if that exists
+        my @path = split /\//, $path;
+        my $file = pop( @path ) .'.yml';
+           $path = join '/', @path;
+        return $path if -d $path and -e "$path/$file"; # or use ./config/whatever/ as the base if ./config/whatever/package.yml exists
+        return $self->path( 'config' ); # otherwise use ./config/ as the base
     }
 );
 has option => (
@@ -57,21 +72,25 @@ has option => (
     , required => 1
     , lazy => 1
     , default => sub {
-        my ( $self, %opts ) = @_;
+        my ( $self, %opts, %conf ) = @_;
 
-        $self->merge_hash( \%opts, $self->config->{option}{default} ) if $self->config->{option}{default};
+        %conf = %{ $self->config->{option} } if exists $self->config->{option};
+        $self->merge_hash( \%opts, $conf{default} ) if $conf{default};
 
         GetOptions( \%opts
             , qw/
                 mode=s
                 verbose+
+                help|?
             /
             , silent => sub {
                 $opts{verbose} = 0;
                 $opts{silent}  = 1;
             }
-            , $self->config->{option}{getopts} ? @{ $self->config->{option}{getopts} } : ()
-        );
+            , $conf{getopts} ? @{ $conf{getopts} } : ()
+        ) or pod2usage( 1 );
+
+        pod2usage( 1 ) if $opts{help};
 
         return \%opts;
     }
@@ -110,16 +129,25 @@ has _database => (
 before run => sub {
     my $self = shift;
     $self->info( ref $self );
-    $self->debug( 'using configuration from', $self->_config_path, $self->config ) if -d $self->_config_path and $self->_config_path eq $self->_config_path_auto;
-    $self->debug( 'configuration file not found, place your config in', $self->_config_path_auto ) unless $self->_config_path eq $self->_config_path_auto;
-    $self->debug( 'using options', $self->option );
+    if ( -e $self->_config_path_auto .'.yml' ) {
+        $self->debug( 'config found in '. $self->_config_path_auto .'.yml', $self->config );
+    }
+    elsif ( -d $self->_config_path and keys %{ scalar $self->config } ) {
+        $self->debug( 'config found in '. $self->_config_path, $self->config );
+    }
+    else {
+        $self->debug( 'config not found; if you want to decouple config from code, you should place your YAML configuration in one of these places:' );
+        $self->debug( '- '. $self->_config_path_auto .'.yml' );
+        $self->debug( '- '. $self->_config_path_auto .'/' );
+        $self->debug( '- '. $self->path( 'config' ) .'/' );
+    }
+    $self->debug( 'options', $self->option ) if keys %{ $self->option };
 };
 
 after run => sub {
     my $self = shift;
     $self->info( ref( $self ) .' finished' );
 };
-
 
 1;
 
@@ -135,7 +163,74 @@ Nour::Script - script bootstrap
 
 =head1 VERSION
 
-version 0.04
+version 0.05
+
+=head1 SYNOPSIS
+
+Here's the quickest example:
+
+    #!/usr/bin/env perl
+
+    {
+        package Script::Generate;
+        use Moose; with 'Nour::Script';
+
+        sub run {
+            my ( $self ) = @_;
+            $self->debug( 'testing' );
+        }
+
+        1;
+    }
+
+    Script::Generate->new->run;
+
+=head1 USAGE
+
+=head2 Configuration setup
+
+No documentation here yet, uses L<Nour::Config>.
+
+=head2 Command-line options
+
+In your script configuration, include an 'option' hash with two properties:
+- getopts: an array of defined options (using L<Getopt::Long> syntax)
+- default: a hash of default values for the defined options
+
+here's an example:
+
+    ---
+    other: configuration
+    stuff: bananas
+    option:
+        getopts:
+            - source=s
+            - target:s
+            - width:i
+            - bigger+
+            - crop
+            - force!
+        default:
+            force: 1
+
+Configuration goes in either ./config/your/package/name/ or ./config/your/package/name.yml (scripts have to be defined as packages for this extension because it's written as a Moose::Role mix-in).
+See L<Nour::Script/"Configuration setup"> for details.
+
+By default, these options are configured:
+- verbose+
+- silent
+- help|?
+- mode=s
+
+The mode option is used in conjunction with L<database|Nour::Script/"Database utility"> configuration (if you set that up).
+
+=head2 Database utility
+
+No documentation here yet, uses L<Nour::Database>.
+
+=head2 Using the logger
+
+No documentation here yet, uses L<Nour::Logger>.
 
 =head1 NAME
 

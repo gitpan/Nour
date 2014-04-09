@@ -31,6 +31,7 @@ my %WriteMakefileArgs = (
     "Mojo::Log" => 0,
     "Moose" => 0,
     "Moose::Role" => 0,
+    "Pod::Usage" => 0,
     "String::CamelCase" => 0,
     "YAML" => 0,
     "feature" => 0,
@@ -49,7 +50,7 @@ my %WriteMakefileArgs = (
     "Test::More" => 0,
     "version" => 0
   },
-  "VERSION" => "0.04",
+  "VERSION" => "0.05",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -74,6 +75,7 @@ my %FallbackPrereqs = (
   "Mojo::Log" => 0,
   "Moose" => 0,
   "Moose::Role" => 0,
+  "Pod::Usage" => 0,
   "String::CamelCase" => 0,
   "Test::More" => 0,
   "YAML" => 0,

@@ -351,7 +351,7 @@ Nour::Database - Mostly just a wrapper for DBIX::Simple.
 
 =head1 VERSION
 
-version 0.04
+version 0.05
 
 =head1 DESCRIPTION
 

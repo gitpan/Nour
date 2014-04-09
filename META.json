@@ -39,6 +39,7 @@
             "Mojo::Log" : "0",
             "Moose" : "0",
             "Moose::Role" : "0",
+            "Pod::Usage" : "0",
             "String::CamelCase" : "0",
             "YAML" : "0",
             "feature" : "0",
@@ -70,27 +71,27 @@
    "provides" : {
       "Nour" : {
          "file" : "lib/Nour.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "Nour::Base" : {
          "file" : "lib/Nour/Base.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "Nour::Config" : {
          "file" : "lib/Nour/Config.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "Nour::Database" : {
          "file" : "lib/Nour/Database.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "Nour::Logger" : {
          "file" : "lib/Nour/Logger.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "Nour::Script" : {
          "file" : "lib/Nour/Script.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       }
    },
    "release_status" : "stable",
@@ -105,7 +106,7 @@
          "web" : "https://github.com/sharabash/nour"
       }
    },
-   "version" : "0.04",
+   "version" : "0.05",
    "x_authority" : "cpan:AMIRITE",
    "x_contributors" : [
       "Nour Sharabash <nour.sharabash@gmail.com>"

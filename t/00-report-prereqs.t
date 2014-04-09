@@ -60,6 +60,7 @@ my $static_prereqs = do { my $x = {
                                       'Mojo::Log' => '0',
                                       'Moose' => '0',
                                       'Moose::Role' => '0',
+                                      'Pod::Usage' => '0',
                                       'String::CamelCase' => '0',
                                       'YAML' => '0',
                                       'feature' => '0',
