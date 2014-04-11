@@ -1,6 +1,6 @@
 # vim:ts=4 sw=4 expandtab smarttab smartindent autoindent cindent
 package Nour::Script; use strict; use warnings;
-# ABSTRACT: script bootstrap
+# ABSTRACT: script bootstrap: let's you stop wasting time rewriting the same code for every script and start mashing code for the core process at hand.
 
 use Moose::Role; with 'Nour::Base';
 use namespace::autoclean;
@@ -12,141 +12,182 @@ use Nour::Logger;
 use Nour::Config;
 use Nour::Database;
 use String::CamelCase qw/camelize decamelize/;
+use Carp qw/longmess shortmess/; # $Carp::Verbose = 1;
 
-has _logger => (
-    is => 'rw'
-    , isa => 'Nour::Logger'
-    , handles => [ qw/debug error fatal info log warn/ ]
-    , required => 1
-    , lazy => 1
-    , default => sub {
-        return new Nour::Logger;
-    }
-);
-
-has _config => (
-    is => 'rw'
-    , isa => 'Nour::Config'
-    , handles => [ qw/config/ ]
-    , required => 1
-    , lazy => 1
-    , default => sub {
-        my $self = shift;
-        my $conf = new Nour::Config ( -base => $self->_config_path );
-        case_exception: {
-            if ( -e $self->_config_path_auto .'.yml' and not -d $self->_config_path_auto ) {
-                my $name = pop @{ [ split /\//, $self->_config_path_auto ] };
-                my %conf = %{ delete $conf->config->{ $name } };
-                delete $conf->config->{ $_ } for keys %{ scalar $conf->config };
-                $conf->config( \%conf );
-            }
-        };
-        return $conf;
-    }
-);
-sub _config_path_auto {
-    my $self = shift;
-    my $path = $self->path( qw/config/, map { decamelize $_ } split /::/, ref $self );
-       $path =~ s/\/$//;
-    return $path;
-}
-has _config_path => (
-    is => 'rw'
-    , isa => 'Str'
-    , lazy => 1
-    , required => 1
-    , default => sub {
-        my $self = shift;
-        my $path =  $self->_config_path_auto;
-        return $path if -d $path; # use ./config/whatever/package as the base if that exists
-        my @path = split /\//, $path;
-        my $file = pop( @path ) .'.yml';
-           $path = join '/', @path;
-        return $path if -d $path and -e "$path/$file"; # or use ./config/whatever/ as the base if ./config/whatever/package.yml exists
-        return $self->path( 'config' ); # otherwise use ./config/ as the base
-    }
-);
-has option => (
-    is => 'rw'
-    , isa => 'HashRef'
-    , required => 1
-    , lazy => 1
-    , default => sub {
-        my ( $self, %opts, %conf ) = @_;
-
-        %conf = %{ $self->config->{option} } if exists $self->config->{option};
-        $self->merge_hash( \%opts, $conf{default} ) if $conf{default};
-
-        GetOptions( \%opts
-            , qw/
-                mode=s
-                verbose+
-                help|?
-            /
-            , silent => sub {
-                $opts{verbose} = 0;
-                $opts{silent}  = 1;
-            }
-            , $conf{getopts} ? @{ $conf{getopts} } : ()
-        ) or pod2usage( 1 );
-
-        pod2usage( 1 ) if $opts{help};
-
-        return \%opts;
-    }
-);
-
-do {
-    my $method = $_;
-    around $method => sub {
-        my ( $next, $self, @args ) = @_;
-        return $self->$next( @args ) unless $self->option->{silent};
-        return $self->$next( @args ) if $method eq 'log' and not @args;
-        return;
-    };
-} for qw/debug info log/;
-
-
-has _database => (
-    is => 'rw'
-    , isa => 'Nour::Database'
-    , handles => [ qw/db/ ]
-    , lazy => 1
-    , required => 1
-    , default => sub {
-        my $self = shift;
-        my %conf = $self->config->{database} ? %{ $self->config->{database} } : (
-            # default options here
-        );
-        $conf{ '-opts' }{database} = $self->option->{mode} if $self->option->{mode} and not grep {
-            $_ eq '--database' # --database will get processed by nour::database
-        } @ARGV;
-        $conf{ '-opts' }{log} = $self->log->mojo unless $self->option->{silent}; #_logger->_logger;
-        return new Nour::Database ( %conf );
-    }
-);
-
-before run => sub {
-    my $self = shift;
-    $self->info( ref $self );
-    if ( -e $self->_config_path_auto .'.yml' ) {
-        $self->debug( 'config found in '. $self->_config_path_auto .'.yml', $self->config );
-    }
-    elsif ( -d $self->_config_path and keys %{ scalar $self->config } ) {
-        $self->debug( 'config found in '. $self->_config_path, $self->config );
-    }
-    else {
-        $self->debug( 'config not found; if you want to decouple config from code, you should place your YAML configuration in one of these places:' );
-        $self->debug( '- '. $self->_config_path_auto .'.yml' );
-        $self->debug( '- '. $self->_config_path_auto .'/' );
-        $self->debug( '- '. $self->path( 'config' ) .'/' );
-    }
-    $self->debug( 'options', $self->option ) if keys %{ $self->option };
+logger: {
+    has _logger => (
+        is => 'rw'
+        , isa => 'Nour::Logger'
+        , handles => [ qw/debug error fatal info log warn/ ]
+        , required => 1
+        , lazy => 1
+        , default => sub {
+            return new Nour::Logger;
+        }
+    );
 };
 
-after run => sub {
-    my $self = shift;
-    $self->info( ref( $self ) .' finished' );
+config: {
+    has _config => (
+        is => 'rw'
+        , isa => 'Nour::Config'
+        , handles => [ qw/config/ ]
+        , required => 1
+        , lazy => 1
+        , default => sub {
+            my $self = shift;
+            my $conf = new Nour::Config ( -base => $self->_config_path );
+            case_exception: {
+                if ( -e $self->_config_path_auto .'.yml' and not -d $self->_config_path_auto ) {
+                    my $name = pop @{ [ split /\//, $self->_config_path_auto ] };
+                    do {
+                        my %conf = %{ delete $conf->config->{ $name } };
+                        delete $conf->config->{ $_ } for keys %{ scalar $conf->config };
+                        $conf->config( \%conf );
+                    } if exists $conf->config->{ $name } and ref $conf->config->{ $name } eq 'HASH';
+                }
+            };
+            return $conf;
+        }
+    );
+    sub _config_path_auto {
+        my $self = shift;
+        my $path = $self->path( qw/config/, map { decamelize $_ } split /::/, ref $self );
+           $path =~ s/\/$//;
+        return $path;
+    }
+    has _config_path => (
+        is => 'rw'
+        , isa => 'Str'
+        , lazy => 1
+        , required => 1
+        , default => sub {
+            my $self = shift;
+            my $path =  $self->_config_path_auto;
+            return $path if -d $path; # use ./config/whatever/package as the base if that exists
+            my @path = split /\//, $path;
+            my $file = pop( @path ) .'.yml';
+               $path = join '/', @path;
+            return $path if -d $path and -e "$path/$file"; # or use ./config/whatever/ as the base if ./config/whatever/package.yml exists
+            return $self->path( 'config' ); # otherwise use ./config/ as the base
+        }
+    );
+};
+
+database: {
+    has _database => (
+        is => 'rw'
+        , isa => 'Nour::Database'
+        , handles => [ qw/db/ ]
+        , lazy => 1
+        , required => 1
+        , default => sub {
+            my $self = shift;
+            my %conf = $self->config->{database} ? %{ $self->config->{database} } : (
+                # default options here
+            );
+            $conf{ '-opts' }{database} = $self->option->{mode} if $self->option->{mode} and not grep {
+                $_ eq '--database' # --database will get processed by nour::database
+            } @ARGV;
+            $conf{ '-opts' }{log} = $self->log->mojo unless $self->option->{silent}; #_logger->_logger;
+            return new Nour::Database ( %conf );
+        }
+    );
+};
+
+options: {
+    has _option => (
+        is => 'rw'
+        , isa => 'HashRef'
+        , required => 1
+        , lazy => 1
+        , default => sub {
+            my ( $self, %opts, %conf ) = @_;
+
+            %conf = %{ $self->config->{option} } if exists $self->config->{option};
+            $self->merge_hash( \%opts, $conf{default} ) if $conf{default};
+
+            GetOptions( \%opts
+                , qw/
+                    mode=s
+                    verbose+
+                    help|?
+                /
+                , silent => sub {
+                    $opts{verbose} = 0;
+                    $opts{silent}  = 1;
+                }
+                , $conf{getopts} ? @{ $conf{getopts} } : ()
+            ) or pod2usage( 1 );
+
+            pod2usage( 1 ) if $opts{help};
+
+            return \%opts;
+        }
+    );
+    sub option {
+        my $self = shift;
+        my @args = @_;
+
+        if ( @args and defined $args[0] ) {
+            return $self->_option->{ $args[0] } if scalar @args eq 1 and not ref $args[0];
+
+            my %option = ref $args[0] eq 'HASH' ? %{ $args[0] } : @args;
+
+            for my $key ( keys %option ) {
+                $self->_option->{ $key } = $option{ $key };
+            }
+        }
+
+        return $self->_option;
+    }
+    sub options { shift->option( @_ ) }
+};
+
+runtime: {
+    before run => sub {
+        my $self = shift;
+        $self->info( ref $self );
+        if ( -e $self->_config_path_auto .'.yml' ) {
+            $self->debug( 'using config (from '. $self->_config_path_auto .'.yml)', $self->config );
+        }
+        elsif ( -d $self->_config_path and keys %{ scalar $self->config } ) {
+            $self->debug( 'using config (from '. $self->_config_path .')', $self->config );
+        }
+        else {
+            $self->debug( 'not using config; if you want to decouple config from code, you should place your YAML configuration in one of these places:' );
+            $self->debug( '- '. $self->_config_path_auto .'.yml' );
+            $self->debug( '- '. $self->_config_path_auto .'/' );
+            $self->debug( '- '. $self->path( 'config' ) .'/' );
+        }
+        $self->debug( 'using options (coalesced from config and command-line)', $self->option ) if keys %{ $self->option };
+    };
+    sub run { shift->warn( 'sub run {} says you should override this method' ); }
+    after run => sub {
+        my $self = shift;
+        $self->info( ref( $self ) .' finished' );
+    };
+    around run => sub {
+        my $orig = shift;
+        my $self = shift;
+        local $SIG{__DIE__} = sub {
+            my $carp = longmess @_;
+            $self->error( "custom carp ". $carp );
+        };
+        return $self->$orig( @_ );
+    };
+};
+
+silence_is_golden: {
+    do {
+        my $method = $_;
+        around $method => sub {
+            my ( $next, $self, @args ) = @_;
+            return $self->$next( @args ) unless $self->option->{silent};
+            return $self->$next( @args ) if $method eq 'log' and not @args;
+            return;
+        };
+    } for qw/debug info log/;
 };
 
 1;
@@ -159,11 +200,11 @@ __END__
 
 =head1 NAME
 
-Nour::Script - script bootstrap
+Nour::Script - script bootstrap: let's you stop wasting time rewriting the same code for every script and start mashing code for the core process at hand.
 
 =head1 VERSION
 
-version 0.05
+version 0.06
 
 =head1 SYNOPSIS
 

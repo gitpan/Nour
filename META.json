@@ -71,27 +71,27 @@
    "provides" : {
       "Nour" : {
          "file" : "lib/Nour.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "Nour::Base" : {
          "file" : "lib/Nour/Base.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "Nour::Config" : {
          "file" : "lib/Nour/Config.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "Nour::Database" : {
          "file" : "lib/Nour/Database.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "Nour::Logger" : {
          "file" : "lib/Nour/Logger.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "Nour::Script" : {
          "file" : "lib/Nour/Script.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       }
    },
    "release_status" : "stable",
@@ -106,7 +106,7 @@
          "web" : "https://github.com/sharabash/nour"
       }
    },
-   "version" : "0.05",
+   "version" : "0.06",
    "x_authority" : "cpan:AMIRITE",
    "x_contributors" : [
       "Nour Sharabash <nour.sharabash@gmail.com>"
