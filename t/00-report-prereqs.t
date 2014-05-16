@@ -57,6 +57,7 @@ my $static_prereqs = do { my $x = {
                                       'File::Find' => '0',
                                       'FindBin' => '0',
                                       'Getopt::Long' => '0',
+                                      'List::AllUtils' => '0',
                                       'Mojo::Log' => '0',
                                       'Moose' => '0',
                                       'Moose::Role' => '0',

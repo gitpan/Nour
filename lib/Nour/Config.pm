@@ -5,6 +5,7 @@ use Moose;
 use namespace::autoclean;
 use YAML qw/LoadFile DumpFile/;
 use File::Find;
+use List::AllUtils qw/uniq/;
 
 with 'Nour::Base';
 
@@ -20,6 +21,11 @@ has _config => (
 has _path => (
     is => 'rw'
     , isa => 'HashRef'
+);
+
+has _path_list => (
+    is => 'rw'
+    , isa => 'ArrayRef'
 );
 
 around BUILDARGS => sub {
@@ -85,6 +91,8 @@ around BUILD => sub {
             }
         }, $path );
     }
+
+    $self->_path_list( [ uniq sort values %path ] );
 
     # Get config files and embedded configuration.
     for my $name ( keys %path ) {
@@ -201,7 +209,7 @@ Nour::Config
 
 =head1 VERSION
 
-version 0.07
+version 0.08
 
 =head1 NAME
 

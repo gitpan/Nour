@@ -28,6 +28,7 @@ my %WriteMakefileArgs = (
     "File::Find" => 0,
     "FindBin" => 0,
     "Getopt::Long" => 0,
+    "List::AllUtils" => 0,
     "Mojo::Log" => 0,
     "Moose" => 0,
     "Moose::Role" => 0,
@@ -50,7 +51,7 @@ my %WriteMakefileArgs = (
     "Test::More" => 0,
     "version" => 0
   },
-  "VERSION" => "0.07",
+  "VERSION" => "0.08",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -71,6 +72,7 @@ my %FallbackPrereqs = (
   "Getopt::Long" => 0,
   "IO::Handle" => 0,
   "IPC::Open3" => 0,
+  "List::AllUtils" => 0,
   "List::Util" => 0,
   "Mojo::Log" => 0,
   "Moose" => 0,
