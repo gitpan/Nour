@@ -71,7 +71,7 @@ Nour::Logger - a mixin module for logging, mostly just wraps Mojo::Log
 
 =head1 VERSION
 
-version 0.08
+version 0.09
 
 =head1 NAME
 

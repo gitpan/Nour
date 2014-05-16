@@ -204,7 +204,7 @@ Nour::Script - script bootstrap: let's you stop wasting time rewriting the same 
 
 =head1 VERSION
 
-version 0.08
+version 0.09
 
 =head1 SYNOPSIS
 

@@ -5,6 +5,7 @@ package Nour::Base;
 use FindBin;
 use Moose::Role;
 use namespace::autoclean;
+use YAML qw/DumpFile/;
 use strict; use warnings;
 
 
@@ -96,7 +97,7 @@ Nour::Base - just a base role
 
 =head1 VERSION
 
-version 0.08
+version 0.09
 
 =head1 NAME
 
