@@ -97,7 +97,7 @@ Nour::Base - just a base role
 
 =head1 VERSION
 
-version 0.09
+version 0.10
 
 =head1 NAME
 

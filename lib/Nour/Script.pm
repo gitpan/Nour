@@ -34,44 +34,36 @@ config: {
         , handles => [ qw/config/ ]
         , required => 1
         , lazy => 1
-        , default => sub {
-            my $self = shift;
-            my $conf = new Nour::Config ( -base => $self->_config_path );
-            case_exception: {
-                if ( -e $self->_config_path_auto .'.yml' and not -d $self->_config_path_auto ) {
-                    my $name = pop @{ [ split /\//, $self->_config_path_auto ] };
-                    do {
-                        my %conf = %{ delete $conf->config->{ $name } };
-                        delete $conf->config->{ $_ } for keys %{ scalar $conf->config };
-                        $conf->config( \%conf );
-                    } if exists $conf->config->{ $name } and ref $conf->config->{ $name } eq 'HASH';
-                }
-            };
-            return $conf;
-        }
+        , default => sub { new Nour::Config ( -base => shift->_config_base ) }
     );
-    sub _config_path_auto {
+    sub _config_base_auto {
         my $self = shift;
         my $path = $self->path( qw/config/, map { decamelize $_ } split /::/, ref $self );
            $path =~ s/\/$//;
         return $path;
     }
-    has _config_path => (
+    has _config_base => (
         is => 'rw'
         , isa => 'Str'
         , lazy => 1
         , required => 1
-        , default => sub {
-            my $self = shift;
-            my $path =  $self->_config_path_auto;
-            return $path if -d $path; # use ./config/whatever/package as the base if that exists
-            my @path = split /\//, $path;
-            my $file = pop( @path ) .'.yml';
-               $path = join '/', @path;
-            return $path if -d $path and -e "$path/$file"; # or use ./config/whatever/ as the base if ./config/whatever/package.yml exists
-            return $self->path( 'config' ); # otherwise use ./config/ as the base
-        }
+        , init_arg => 'config_base'
+        , builder => 'config_base'
     );
+    sub config_base {
+        my $self = shift;
+        my $path =  $self->_config_base_auto;
+        return $path if -d $path; # use ./config/whatever/package as the base if that exists
+        return $path .( -f "$path.yml" ? '.yml' : '.yaml' ) if -f "$path.yml" or -f "$path.yaml";
+        my @path = split /\//, $path;
+        my $file = pop( @path ) .'.yml';
+           $path = join '/', @path;
+        return $path if -d $path and -e "$path/$file"; # or use ./config/whatever/ as the base if ./config/whatever/package.yml exists
+        $path = $self->path( 'config' );
+        return $path if -d $path; # use ./config/whatever/package as the base if that exists
+        return $path .( -f "$path.yml" ? '.yml' : '.yaml' ) if -f "$path.yml" or -f "$path.yaml";
+        return $path;
+    }
 };
 
 database: {
@@ -148,16 +140,13 @@ runtime: {
     before run => sub {
         my $self = shift;
         $self->info( ref $self );
-        if ( -e $self->_config_path_auto .'.yml' ) {
-            $self->debug( 'using config (from '. $self->_config_path_auto .'.yml)', $self->config );
-        }
-        elsif ( -d $self->_config_path and keys %{ scalar $self->config } ) {
-            $self->debug( 'using config (from '. $self->_config_path .')', $self->config );
+        if ( -e $self->_config_base and keys %{ scalar $self->config } ) {
+            $self->debug( 'using config (from '. $self->_config_base .')', $self->config );
         }
         else {
             $self->debug( 'not using config; if you want to decouple config from code, you should place your YAML configuration in one of these places:' );
-            $self->debug( '- '. $self->_config_path_auto .'.yml' );
-            $self->debug( '- '. $self->_config_path_auto .'/' );
+            $self->debug( '- '. $self->_config_base_auto .'.yml' );
+            $self->debug( '- '. $self->_config_base_auto .'/' );
             $self->debug( '- '. $self->path( 'config' ) .'/' );
         }
         $self->debug( 'using options (coalesced from config and command-line)', $self->option ) if keys %{ $self->option };
@@ -204,7 +193,7 @@ Nour::Script - script bootstrap: let's you stop wasting time rewriting the same 
 
 =head1 VERSION
 
-version 0.09
+version 0.10
 
 =head1 SYNOPSIS
 

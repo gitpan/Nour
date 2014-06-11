@@ -30,22 +30,22 @@ no_index:
 provides:
   Nour:
     file: lib/Nour.pm
-    version: '0.09'
+    version: '0.10'
   Nour::Base:
     file: lib/Nour/Base.pm
-    version: '0.09'
+    version: '0.10'
   Nour::Config:
     file: lib/Nour/Config.pm
-    version: '0.09'
+    version: '0.10'
   Nour::Database:
     file: lib/Nour/Database.pm
-    version: '0.09'
+    version: '0.10'
   Nour::Logger:
     file: lib/Nour/Logger.pm
-    version: '0.09'
+    version: '0.10'
   Nour::Script:
     file: lib/Nour/Script.pm
-    version: '0.09'
+    version: '0.10'
 requires:
   Carp: '0'
   DBI: '0'
@@ -70,7 +70,7 @@ resources:
   bugtracker: https://github.com/sharabash/nour/issues
   homepage: https://metacpan.org/release/Nour
   repository: git://github.com/sharabash/nour.git
-version: '0.09'
+version: '0.10'
 x_authority: cpan:AMIRITE
 x_contributors:
   - 'Nour Sharabash <nour.sharabash@gmail.com>'

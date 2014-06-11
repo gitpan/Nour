@@ -48,15 +48,16 @@ around BUILD => sub {
         for my $name ( keys %{ $self->_path } ) {
             my $path = $self->_path->{ $name };
 
-            if ( $path =~ /^\// and -d $path ) {
+            if ( $path =~ /^\// and ( -d $path or -f $path and $path =~ /\.ya?ml$/ ) ) {
                 $path{ $name } = $path;
             }
-            elsif ( -d $self->path( $path ) ) {
+            elsif ( -d $self->path( $path ) or -f $self->path( $path ) and $self->path( $path ) =~ /\.ya?ml$/ ) {
                 $path{ $name } = $self->path( $path );
             }
             else {
                 for my $sub ( qw/config conf cfg/ ) {
-                    if ( -d $self->path( $sub, $path ) ) {
+                    my $subpath = $self->path( $sub, $path );
+                    if ( -d $subpath or -f $subpath and $subpath =~ /\.ya?ml$/ ) {
                         $path{ $name } = $self->path( $sub, $path );
                         last;
                     }
@@ -71,6 +72,9 @@ around BUILD => sub {
                 $path{ '-base' } = $path;
                 last check;
             }
+            else {
+                $path{ '-base' } = $path .( -f "$path.yml" ? '.yml' : '.yaml' ) if -f "$path.yml" or -f "$path.yaml";
+            }
         }
     }
     return $self->$next( @args ) unless %path;
@@ -78,18 +82,20 @@ around BUILD => sub {
     my $conf = $self->_config;
 
     if ( my $path = $path{ '-base' } ) {
-        finddepth( sub {
-            my $name = $File::Find::name;
-            if ( $name =~ qr/\w+\.yml$/ ) {
-                my ( $key, $val );
-                $val = $name;
-                $val =~ s/\/\w+\.yml$//;
-                $key = $val;
-                $key =~ s/^\Q$path\E\/?//;
-                my @key = split /\//, $key;
-                $path{ $key } = $val if $key and not $path{ $key } and $key[ -1 ] ne 'private';
-            }
-        }, $path );
+        if ( -d $path ) {
+            finddepth( sub {
+                my $name = $File::Find::name;
+                if ( $name =~ qr/\w+\.ya?ml$/ ) {
+                    my ( $key, $val );
+                    $val = $name;
+                    $val =~ s/\/\w+\.ya?ml$//;
+                    $key = $val;
+                    $key =~ s/^\Q$path\E\/?//;
+                    my @key = split /\//, $key;
+                    $path{ $key } = $val if $key and not $path{ $key } and $key[ -1 ] ne 'private';
+                }
+            }, $path );
+        }
     }
 
     $self->_path_list( [ uniq sort values %path ] );
@@ -106,6 +112,16 @@ around BUILD => sub {
 
         $self->build( conf => $conf, path => $path, name => $name );
     }
+    case_exception: {
+        if ( $path{ '-base' } and -f $path{ '-base' } ) {
+            my $path = $path{ '-base' };
+            my $name = shift @{ [ map { my $s = $_; $s =~ s/\.ya?ml$//; $s } ( pop @{ [ split /\//, $path ] } ) ] };
+            do {
+                my %conf = %{ delete $conf->{ $name } };
+                $conf->{ $_ } = $conf{ $_ } for keys %conf;
+            } if exists $conf->{ $name } and ref $conf->{ $name } eq 'HASH';
+        }
+    };
 
     $self->config( $conf );
 
@@ -134,24 +150,31 @@ sub build {
     my ( $self, %args ) = @_;
     my ( %file, %conf );
 
-    opendir my $dh, $args{path} or die "Couldn't open directory '$args{path}': $!";
-    push @{ $file{public} }, map { "$args{path}/$_" } grep {
-        -e "$args{path}/$_" and $_ !~ /^\./ and $_ =~ /\.yml$/
-    } readdir $dh;
-    closedir $dh;
-
-    # Private sub-dir i.e. "./config/private" for sensitive i.e. .gitignore'd config.
-    if ( -d "$args{path}/private" ) {
-        my $path = "$args{path}/private";
-        opendir my $dh, $path or die "Couldn't open directory '$path': $!";
-        push @{ $file{private} }, map { "$path/$_" } grep {
-            -e "$path/$_" and $_ !~ /^\./ and $_ =~ /\.yml$/
+    if ( -f $args{path} and $args{path} =~ /\.ya?ml$/ ) {
+        push @{ $file{public} }, $args{path};
+        ( my $private = $args{path} ) =~ s/\.ya?ml$/.private/;
+        push @{ $file{private} }, $private .( -f "$private.yml" ? '.yml' : '.yaml' ) if -f "$private.yml" or -f "$private.yaml";
+    }
+    else {
+        opendir my $dh, $args{path} or die "Couldn't open directory '$args{path}': $!";
+        push @{ $file{public} }, map { "$args{path}/$_" } grep {
+            -e "$args{path}/$_" and $_ !~ /^\./ and $_ =~ /\.ya?ml$/
         } readdir $dh;
         closedir $dh;
+
+        # Private sub-dir i.e. "./config/private" for sensitive i.e. .gitignore'd config.
+        if ( -d "$args{path}/private" ) {
+            my $path = "$args{path}/private";
+            opendir my $dh, $path or die "Couldn't open directory '$path': $!";
+            push @{ $file{private} }, map { "$path/$_" } grep {
+                -e "$path/$_" and $_ !~ /^\./ and $_ =~ /\.ya?ml$/
+            } readdir $dh;
+            closedir $dh;
+        }
     }
 
     for my $file ( @{ $file{public} } ) {
-        my ( $name ) = ( split /\//, $file )[ -1 ] =~ /^(.*)\.yml$/;
+        my ( $name ) = ( split /\//, $file )[ -1 ] =~ /^(.*)\.ya?ml$/;
         my $conf = LoadFile $file;
 
         if ( $name eq 'config' or $name eq 'base' ) {
@@ -168,7 +191,7 @@ sub build {
     }
 
     for my $file ( @{ $file{private} } ) {
-        my ( $name ) = ( split /\//, $file )[ -1 ] =~ /^(.*)\.yml$/;
+        my ( $name ) = ( split /\//, $file )[ -1 ] =~ /^(.*)\.ya?ml$/;
         my $conf = LoadFile $file;
 
         if ( $name eq 'config' or $name eq 'base' ) {
@@ -209,7 +232,7 @@ Nour::Config
 
 =head1 VERSION
 
-version 0.09
+version 0.10
 
 =head1 NAME
 
